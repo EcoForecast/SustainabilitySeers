@@ -85,10 +85,6 @@ GPPall <- rbind(subset1, updates)
 save(GPPall, file=GPP_file) 
 
 ## Variable 2: NEON Solar Radiation----
-install.packages("neonUtilities")
-library(neonUtilities)
-library(lubridate)
-
 #download data and all associated files initially to check structure
 #PAR <- neonUtilities::loadByProduct(dpID = "DP1.00024.001", site="HARV", package="expanded", startdate="2020-01")
 #head(PAR)
@@ -156,51 +152,3 @@ updates2x <- rbind(updates2$PRIPRE_5min) # updates of the 1min radiation data
 allPrecipData <- rbind(precip1, updates2x)
 
 save(updates2x, file=precip.RData)
-
-## Variable 4: NEON soil chemistry----
-source("/Data_Download_Functions/NEON_download_soil_chemistry.R")
-if (file.exists("soilchemistry.RData")) {
-  load("soilchemistry.RData")
-  last_update <- max(soilChemistry$collectDate)
-} else {
-  #download data and all associated files initially to check structure
-  soilChemistry <- NEON_download_soil_chemistry(lon=-72.1727, 
-                                                lat=42.5369, 
-                                                start_date = "2020-01-01", 
-                                                end_date = end_date, 
-                                                store_dir = file.path(getwd(), "download"))
-  save(soilChemistry,file="soilchemistry.RData")
-}
-# Now create grab updates
-#download data and all associated files initially to check structure
-updates <- NEON_download_soil_chemistry(lon=-72.1727, 
-                                        lat=42.5369, 
-                                        start_date = last_update, 
-                                        end_date = end_date, 
-                                        store_dir = file.path(getwd(), "download"))
-soilChemistry <- rbind(soilChemistry, updates)
-save(soilChemistry,file="soilchemistry.RData")
-
-## Variable 5: NEON CO2 concentration----
-source("/Data_Download_Functions/NEON_download_CO2_concentration.R")
-if (file.exists("co2_concentration.RData")) {
-  load("co2_concentration.RData")
-  last_update <- as.Date(max(co2Concentration$timeBgn))
-} else {
-  #download data and all associated files initially to check structure
-  co2Concentration <- NEON_download_CO2_concentration(lon=-72.1727, 
-                                                      lat=42.5369, 
-                                                      start_date = "2020-01-01", 
-                                                      end_date = end_date, 
-                                                      store_dir = file.path(getwd(), "download"))
-  save(co2Concentration,file="co2_concentration.RData")
-}
-# Now create grab updates
-#download data and all associated files initially to check structure
-updates <- NEON_download_CO2_concentration(lon=-72.1727, 
-                                           lat=42.5369, 
-                                           start_date = last_update, 
-                                           end_date = end_date, 
-                                           store_dir = file.path(getwd(), "download"))
-co2Concentration <- rbind(co2Concentration, updates)
-save(co2Concentration,file="co2_concentration.RData")
