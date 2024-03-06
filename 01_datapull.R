@@ -85,10 +85,6 @@ GPPall <- rbind(subset1, updates)
 save(GPPall, file=GPP_file) 
 
 ## Variable 2: NEON Solar Radiation----
-install.packages("neonUtilities")
-library(neonUtilities)
-library(lubridate)
-
 #download data and all associated files initially to check structure
 #PAR <- neonUtilities::loadByProduct(dpID = "DP1.00024.001", site="HARV", package="expanded", startdate="2020-01")
 #head(PAR)
@@ -156,5 +152,3 @@ updates2x <- rbind(updates2$PRIPRE_5min) # updates of the 1min radiation data
 allPrecipData <- rbind(precip1, updates2x)
 
 save(updates2x, file=precip.RData)
-
-
