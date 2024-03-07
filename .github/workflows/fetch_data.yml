@@ -1,0 +1,51 @@
+name: Daily MODIS Data Download
+
+on:
+  schedule:
+    - cron: "0 0 * * *" # This schedule runs the workflow daily at midnight UTC
+  workflow_dispatch:
+    branches:
+      - main
+
+jobs:
+  run_r_script:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Set up R
+        uses: r-lib/actions/setup-r@v1
+        with:
+          r-version: "4.x"
+
+      - name: Install MODISTools package
+        run: |
+          install.packages("MODISTools")
+          install.packages("dplyr")
+
+      - name: Retrieve previous start and end dates
+        id: get_dates
+        run: |
+          echo "::set-output name=start_date::$(cat start_date.txt)"
+          echo "::set-output name=end_date::$(cat end_date.txt)"
+
+      - name: Run R script
+        run: |
+          # Retrieve previous start and end dates
+          start_date=$(date -d "${{ steps.get_dates.outputs.start_date }}" +%Y-%m-%d)
+          end_date=$(date -d "${{ steps.get_dates.outputs.end_date }}" +%Y-%m-%d)
+
+          # Calculate new start and end dates
+          new_start_date=$(date -d "${start_date} +7 days" +%Y-%m-%d)
+          new_end_date=$(date -d "${end_date} +7 days" +%Y-%m-%d)
+
+          # Fetch data for the new period
+          Rscript MODIS_download.R 40.3 -105.5 GPP "${new_start_date}" "${new_end_date}"
+
+      - name: Store current start and end dates as artifacts
+        if: always()
+        run: |
+          echo "${{ steps.get_dates.outputs.start_date }}" > start_date.txt
+          echo "${{ steps.get_dates.outputs.end_date }}" > end_date.txt
+        continue-on-error: true
