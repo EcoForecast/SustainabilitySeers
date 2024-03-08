@@ -21,6 +21,11 @@ download_site_meta <- function(){
   site_data %>% filter(as.integer(terrestrial) == 1)
 }
 
+# Run functions to collect data
+target1 <- download_targets()       ## Y variables
+sites <- unique(target1$site_id)
+site_data  <- download_site_meta()
+
 # Get future NOAA data
 forecast_date <- Sys.Date()
 noaa_date <- Sys.Date() - days(1)  #Need to use yesterday's NOAA forecast because today's is not available yet
@@ -48,33 +53,34 @@ download_met_forecast <- function(forecast_date){
     #    mutate(air_temperature = air_temperature - 273.15) |> 
     select(datetime, site_id, air_temperature, parameter)
   
+  met_future <- met_future %>%
+    tidyr::pivot_longer(
+      cols = 3, 
+      names_to="variable",
+      values_to = "prediction"
+    )
+  
   return(met_future)
 }
 
 ##' append historical meteorological data into target file
-
 df_past <- neon4cast::noaa_stage3()
-d_site1 <- weather_stage3 |> 
-  dplyr::filter(site_id == "HARV") |>
+
+#check for one site
+d_site1 <- df_past |> 
+  dplyr::filter(site_id == "BART") |>
   dplyr::collect()
 
-# Make plots of covariate data
+# Try for all sites
+noaa_all <- df_past |> 
+  dplyr::filter(site_id %in% sites) |>
+  dplyr::collect() # this won't work on local hard drive, can't allocate 2,6Gb of data
 
-temp = d_site1[ds1$variable == "air_temperature",]
-press = d_site1[ds1$variable == "air_pressure",]
-rh  = d_site1[ds1$variable == "relative_humidity",]
-pcp  = d_site1[ds1$variable == "preciptation_flux",]
+noaa_all <- noaa_all %>%
+  select(-c(family, reference_datetime)) 
 
-plot(temp$datetime, temp$prediction, type='l',
-     main = "HARV Temperature (K)",
-     xlab = "Date",
-     ylab = "Temperature (K)")
+merged_noaa <- rbind(met_future, noaa_all) 
 
-
-
-target1 <- download_targets()       ## Y variables
-sites <- unique(target$site_id)
-site_data  <- download_site_meta()
 #target     <- merge_met_past(target)   ## append met data (X) into target file
 met_future <- download_met_forecast(forecast_date) 
 
@@ -95,9 +101,21 @@ target1 %>%
   #facet_grid(~site_id, scale ="free") +
   ggtitle("NEE")
 
-target %>%
+met_future %>%
   filter(site_id=="BART") %>%
   ggplot(aes(x=datetime, y=air_temperature)) +
   geom_point() +
   ggtitle("NOAA Air Temp")
 
+
+
+# Make plots of NOAA covariate data
+temp = d_site1[d_site1$variable == "air_temperature",]
+press = d_site1[d_site1$variable == "air_pressure",]
+rh  = d_site1[d_site1$variable == "relative_humidity",]
+pcp  = d_site1[d_site1$variable == "preciptation_flux",]
+
+plot(temp$datetime, temp$prediction, type='l',
+     main = "BART Temperature (K)",
+     xlab = "Date",
+     ylab = "Temperature (K)")
