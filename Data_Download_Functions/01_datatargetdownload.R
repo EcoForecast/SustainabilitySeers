@@ -51,48 +51,26 @@ download_met_forecast <- function(forecast_date){
   return(met_future)
 }
 
-
 ##' append historical meteorological data into target file
-##' @param target targets dataframe
-##' @return updated targets dataframe with added weather data
-merge_met_past <- function(target){
-  
-  ## connect to data
-  df_past <- neon4cast::noaa_stage3()
-  
-  ## filter for site and variable
-  sites <- unique(target$site_id)
-  
-  ## temporary hack to remove a site that's mid-behaving
-  sites = sites[!(sites=="POSE")] 
-  target = target |> filter(site_id %in% sites)  
-  
-  ## grab air temperature from the historical forecast
-  noaa_past <- df_past |> 
-    dplyr::filter(site_id %in% sites,
-                  variable == "air_temperature") |> 
-    dplyr::collect()
-  
-  ## aggregate to daily
-  noaa_past_mean = noaa_past |> 
-    mutate(datetime = as.Date(datetime)) |>
-    group_by(datetime, site_id) |> 
-    summarise(air_temperature = mean(prediction),.groups = "drop")
-  
-  ## Aggregate (to day) and convert units of drivers
-  target <- target %>% 
-    group_by(datetime, site_id,variable) %>%
-    summarize(obs2 = mean(observation, na.rm = TRUE), .groups = "drop") %>%
-    mutate(obs3 = ifelse(is.nan(obs2),NA,obs2)) %>%
-    select(datetime, site_id, variable, obs3) %>%
-    rename(observation = obs3) %>%
-    filter(variable %in% c("temperature", "oxygen")) %>% 
-    tidyr::pivot_wider(names_from = "variable", values_from = "observation")
-  
-  ## Merge in past NOAA data into the targets file, matching by date.
-  target <- left_join(target, noaa_past_mean, by = c("datetime","site_id"))
-  
-}
+
+df_past <- neon4cast::noaa_stage3()
+d_site1 <- weather_stage3 |> 
+  dplyr::filter(site_id == "HARV") |>
+  dplyr::collect()
+
+# Make plots of covariate data
+
+temp = d_site1[ds1$variable == "air_temperature",]
+press = d_site1[ds1$variable == "air_pressure",]
+rh  = d_site1[ds1$variable == "relative_humidity",]
+pcp  = d_site1[ds1$variable == "preciptation_flux",]
+
+plot(temp$datetime, temp$prediction, type='l',
+     main = "HARV Temperature (K)",
+     xlab = "Date",
+     ylab = "Temperature (K)")
+
+
 
 target1 <- download_targets()       ## Y variables
 sites <- unique(target$site_id)
