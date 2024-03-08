@@ -62,3 +62,27 @@ merge_met_past <- function(target){
   target <- left_join(target, noaa_past_mean, by = c("datetime","site_id"))
   
 }
+
+target     <- download_targets()       ## Y variables
+site_data  <- download_site_meta()
+#target     <- merge_met_past(target)   ## append met data (X) into target file
+#met_future <- download_met_forecast(forecast_date) 
+
+## visual check of data
+target %>% 
+  filter(variable=="le",
+         site_id=="BART") %>%
+  ggplot(aes(x = datetime, y = observation)) +
+  geom_point() +
+  #facet_grid(~site_id, scale ="free") +
+  ggtitle("LE")
+
+target %>% 
+  filter(variable=="nee",
+         site_id=="BART") %>%
+  ggplot(aes(x = datetime, y = observation)) +
+  geom_point() +
+  #facet_grid(~site_id, scale ="free") +
+  ggtitle("NEE")
+
+
