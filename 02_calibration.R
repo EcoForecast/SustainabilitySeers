@@ -55,10 +55,10 @@ x.cols <- grep("^x",colnames(out)) ## grab all columns that start with the lette
 ci <- apply(out[,x.cols],2,quantile,c(0.025,0.5,0.975)) ## model was fit on log scale
 
 #time series plot
-plot(days, ci[3,], type="l", ylim = range(nee_daily, na.rm = T), col=1)
+plot(days, ci[3,], type="l", ylim = range(nee_daily, na.rm = T), col=1, xlab="Date", ylab="NEE")
 lines(days, ci[1,], col=1)
-lines(days, nee_daily, col=2)
-legend("bottomleft", legend=c("CI", "NEE Observation"), lty=1, col=c(1,2))
+points(days, nee_daily, col=2, pch=20)
+legend("bottomleft", legend=c("CI", "NEE Observation"), lty=c(1,NA), col=c(1,2), pch=c(NA, 20))
 
 #diagnostics
 BGR <- gelman.plot(ef.out$params)
