@@ -85,7 +85,7 @@ effectiveSize(n.out)
 
 ## check variable correlations 
 pairs(n.out)
-corr(n.out)
+cor(n.out)
 
 summary(n.out)
 
