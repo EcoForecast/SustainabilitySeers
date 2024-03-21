@@ -18,13 +18,6 @@ library(rjags)
 #Get the data ----
 source("~/SustainabilitySeers/Data_Download_Functions/01_datatargetdownload.R")
 
-<<<<<<< HEAD
-met_future <- met_future %>%
-  rename(prediction=observation)
-=======
-met_future <- met_future %>% rename(observation=prediction)
->>>>>>> 0c62937f087d9fab30ceb3ac56e1df001dbf1fe4
-
 met_all <- rbind(met_future, df_past)
 nee <- target1 %>% filter(variable=="nee") 
 le <- target1 %>% filter(variable=="le")
