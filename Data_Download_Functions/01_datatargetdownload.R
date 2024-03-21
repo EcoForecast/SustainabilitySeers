@@ -42,7 +42,7 @@ download_met_forecast <- function(forecast_date){
   met_future <- df_future |> 
     dplyr::filter(datetime >= lubridate::as_datetime(forecast_date), 
                   variable %in% c("air_pressure", "air_temperature",
-                                  "relative_humidity", "preciptation_flux")) |> 
+                                  "relative_humidity", "precipitation_flux")) |> 
     dplyr::collect()
   
   ## aggregate to daily
@@ -72,7 +72,7 @@ df_past <- neon4cast::noaa_stage3() %>%
   dplyr::filter(site_id %in% sites,
                 lubridate::year(datetime) >= 2020,
                 variable %in% c("air_pressure", "air_temperature",
-                                "relative_humidity", "preciptation_flux")) |> 
+                                "relative_humidity", "precipitation_flux")) |> 
   dplyr::collect()
 
 #check for one site
