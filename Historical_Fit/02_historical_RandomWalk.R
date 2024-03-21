@@ -1,7 +1,7 @@
 # PREAMBLE
 # Ecological Forecasting Milestone 5:
 # Historical Fit
-# Date Upsated: ''
+# Date Updated: ''
 
 # Load Libraries
 library(neon4cast)
@@ -19,7 +19,7 @@ library(rjags)
 source("~/SustainabilitySeers/Data_Download_Functions/01_datatargetdownload.R")
 
 met_all <- rbind(met_future, df_past)
-nee <- target1 %>% filter(variable=="nee")
+nee <- target1 %>% filter(variable=="nee") 
 le <- target1 %>% filter(variable=="le")
 
 # Look at quick time series ----
