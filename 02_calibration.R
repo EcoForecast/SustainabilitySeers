@@ -59,20 +59,24 @@ nee.df.daily <- nee.df %>%
 merged_nee_met <- left_join(nee.df, met_all, by=c("year", "month", "day", "site_id"),
                             relationship="many-to-one")
 
+nee_daily <- merged_nee_met$nee_daily
+precip_daily <- merged_nee_met$precip_daily
+temp_daily <- merged_nee_met$temp_daily
+humid_daily <- merged_nee_met$humid_daily
 
 #replace na
 na.ind <- which(is.na(nee.df.daily))
 nee.df.daily[na.ind] <- NA
 
 ## fit the model
-data <- list(x_ic = mean(nee.df.daily, na.rm = T),
-             tau_ic = 1/sd(nee.df.daily, na.rm = T),
+data <- list(x_ic = mean(nee_daily, na.rm = T),
+             tau_ic = 1/sd(nee_daily, na.rm = T),
              a_obs = 1,
              r_obs = 1,
              a_add = 1,
              r_add = 1,
-             n = length(nee.df.daily),
-             y = nee.df.daily,
+             n = length(nee_daily),
+             y = nee_daily,
              Precip = precip_daily,
              Temp = temp_daily,
              humid = humid_daily)
@@ -91,6 +95,9 @@ legend("bottomleft", legend=c("CI", "NEE Observation"), lty=c(1,NA), col=c(1,2),
 #diagnostics
 BGR <- gelman.plot(ef.out$params)
 
+plot(ef.out$params)
+
+effectiveSize(ef.out)
 
 
 
