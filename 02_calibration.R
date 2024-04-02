@@ -3,6 +3,7 @@ library(daymetr)
 library(purrr)
 library(ncdf4)
 devtools::install_github("EcoForecast/ecoforecastR",force=TRUE)
+devtools::install_github('eco4cast/neon4cast')
 
 #Get the data ----
 source("~/SustainabilitySeers/Data_Download_Functions/01_datatargetdownload.R")
@@ -15,9 +16,10 @@ le.df <- target1 %>% filter(variable=="le")
 #define period.
 time.points <- seq(as.Date("2021-01-01"), as.Date("2021-12-31"), "1 day")
 df_past <- df_past %>% 
-  filter(lubridate::date(datetime) %in% time.points)
+  filter(lubridate::date(datetime) %in% time.points,
+         site_id == "HARV")
 
-met_all <- rbind(met_future, df_past)
+met_all <- df_past#rbind(met_future, df_past)
 met_all <- met_all %>% tidyr::pivot_wider(
   names_from=variable,
   values_from=prediction
@@ -46,7 +48,7 @@ met_all <- met_all %>%
   ) %>%
   mutate(date = ymd(paste0(year, "-", month, "-", day)))
 
-nee.df.daily <- nee.df %>%
+nee.df.daily <- nee.df.harv %>%
   mutate(year=year(datetime),
          month=month(datetime), 
          day=day(datetime)) %>%
@@ -56,17 +58,15 @@ nee.df.daily <- nee.df %>%
   ) %>%
   mutate(date = ymd(paste0(year, "-", month, "-", day)))
 
-merged_nee_met <- left_join(nee.df, met_all, by=c("year", "month", "day", "site_id"),
+merged_nee_met <- left_join(nee.df.daily, met_all, by=c("year", "month", "day", "site_id"),
                             relationship="many-to-one")
+nee_daily <- precip_daily <- temp_daily <- humid_daily <- rep(NA, length(time.points))
+non.na.inds <- which(time.points %in% nee.df.daily$date)
 
-nee_daily <- merged_nee_met$nee_daily
-precip_daily <- merged_nee_met$precip_daily
-temp_daily <- merged_nee_met$temp_daily
-humid_daily <- merged_nee_met$humid_daily
-
-#replace na
-na.ind <- which(is.na(nee.df.daily))
-nee.df.daily[na.ind] <- NA
+nee_daily[non.na.inds] <- merged_nee_met$nee_daily
+precip_daily[non.na.inds] <- merged_nee_met$precip_daily
+temp_daily[non.na.inds] <- merged_nee_met$temp_daily
+humid_daily[non.na.inds] <- merged_nee_met$humid_daily
 
 ## fit the model
 data <- list(x_ic = mean(nee_daily, na.rm = T),
@@ -87,9 +87,9 @@ x.cols <- grep("^x",colnames(out)) ## grab all columns that start with the lette
 ci <- apply(out[,x.cols],2,quantile,c(0.025,0.5,0.975)) ## model was fit on log scale
 
 #time series plot
-plot(days, ci[3,], type="l", ylim = range(nee_daily, na.rm = T), col=1, xlab="Date", ylab="NEE")
-lines(days, ci[1,], col=1)
-points(days, nee_daily, col=2, pch=20)
+plot(time.points, ci[3,], type="l", ylim = range(nee_daily, na.rm = T), col=1, xlab="Date", ylab="NEE")
+lines(time.points, ci[1,], col=1)
+points(time.points, nee_daily, col=2, pch=20)
 legend("bottomleft", legend=c("CI", "NEE Observation"), lty=c(1,NA), col=c(1,2), pch=c(NA, 20))
 
 #diagnostics
