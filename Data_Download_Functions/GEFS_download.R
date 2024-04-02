@@ -13,7 +13,8 @@
 ##' \dontrun{
 ##' dat <- GEFS_download("2024-03-06", "HARV", "air_temperature")
 ##' }
-GEFS_download <- function(date, site_name, variables = NULL){
+GEFS_download <- function(date, site_name, variables = NULL, is.daily = FALSE){
+  options(dplyr.summarise.inform = FALSE)
   #check packages.
   packages <- c("arrow", "purrr", "dplyr", "lubridate")
   packages.exist <- unlist(lapply(packages, require, character.only = TRUE))
@@ -36,11 +37,25 @@ GEFS_download <- function(date, site_name, variables = NULL){
     date <- lubridate::as_date(date) - lubridate::days(1)#if data doesn't exist, try last day.
     bucket <- paste0("neon4cast-drivers/noaa/gefs-v12/stage2/parquet/0/", date)
   }
-  df <- ds %>%
-    filter(variable %in% variables,
-           site_id == site_name) %>%
-    collect() %>%
-    mutate(datetime = lubridate::ymd_hms(datetime)) %>%
-    filter(datetime >= lubridate::as_date(date))
+  if (is.daily) {
+    df <- ds %>%
+      filter(variable %in% variables,
+             site_id == site_name) %>%
+      collect() %>%
+      mutate(datetime = lubridate::date(datetime)) %>%
+      filter(datetime == lubridate::as_date(date)) %>%
+      group_by(variable, parameter, datetime) %>%
+      summarize(
+        pred_daily = mean(prediction, na.rm=T)
+      )
+  } else {
+    df <- ds %>%
+      filter(variable %in% variables,
+             site_id == site_name) %>%
+      collect() %>%
+      mutate(datetime = lubridate::ymd_hms(datetime)) %>%
+      filter(datetime >= lubridate::as_date(date),
+             datetime < lubridate::as_date(date) + lubridate::days(1))
+  }
   return(df)
 }
