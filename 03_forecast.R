@@ -12,11 +12,6 @@ if (TRUE) {
   params <- params[sample.inds,]
 }
 #grab met data.
-# met <- as.data.frame(ef.out$data$Xf)#we will need to sample from GEFs in the future.
-# #remove na.
-# na.inds <- which(is.na(met[,2]))
-# met <- met[-na.inds,]
-
 #accessing GEFS.
 time_points <- seq(as.Date("2021-01-01"), as.Date("2021-03-31"), "1 day")
 met_variables <- c("precipitation_flux", "air_temperature", "relative_humidity", "surface_downwelling_shortwave_flux_in_air")
@@ -57,7 +52,7 @@ nee_forecast <- function(ensemble) {
       params["betaTemp"]*temp[t] + 
       params["betaPrecip"]*precip[t] + 
       params["betahumid"]*humid[t]
-    mu[t] <- new_nee
+    mu[t] <- rnorm(1, new_nee, 1/sqrt(params["tau_add"]))
   }
   mu
 }
