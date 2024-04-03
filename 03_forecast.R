@@ -1,38 +1,6 @@
 library(purrr)
-load("~/SustainabilitySeers/Data/calibration.Rdata")
+load("~/SustainabilitySeers/Data/ensembleParameters.Rdata")
 source("~/SustainabilitySeers/Data_Download_Functions/GEFS_download.R")
-#set initial value of NEE for the forecasts.
-x_ic <- 0.5177017
-#combine parameters from ef.out object.
-params <- do.call(rbind, ef.out$params)
-#we can also setup ensemble sizes and sample from the parameter spaces.
-if (TRUE) {
-  ens <- 100
-  sample.inds <- sample(seq_along(params[,1]), ens)
-  params <- params[sample.inds,]
-}
-#grab met data.
-#accessing GEFS.
-time_points <- seq(as.Date("2021-01-01"), as.Date("2021-03-31"), "1 day")
-met_variables <- c("precipitation_flux", "air_temperature", "relative_humidity", "surface_downwelling_shortwave_flux_in_air")
-
-met <- list()
-print(paste0("Downloading GEFS weather forecasts from ", time_points[1], " to ", time_points[length(time_points)]))
-pb <- utils::txtProgressBar(min = 0, max = length(time_points), style = 3)
-for (i in seq_along(time_points)) {
-  met[[i]] <- GEFS_download(date = time_points[i], site_name = "HARV", variables = met_variables, is.daily = T)
-  utils::setTxtProgressBar(pb, i)
-}
-met <- do.call(rbind, met)
-
-ENS <- vector("list", ens)
-for (i in seq_along(ENS)) {
-  #sample met data
-  ens.met <- met[which(met$parameter == sample(1:31, 1)),]
-  ENS[[i]] <- list(params = params[i,],
-                   met = ens.met,
-                   x_ic = x_ic)
-}
 #function for the forecasts.
 nee_forecast <- function(ensemble) {
   params <- ensemble$params
@@ -41,6 +9,9 @@ nee_forecast <- function(ensemble) {
   temp <- met$pred_daily[which(met$variable == "air_temperature")]
   precip <- met$pred_daily[which(met$variable == "precipitation_flux")]
   humid <- met$pred_daily[which(met$variable == "relative_humidity")]
+  Pres <- met$pred_daily[which(met$variable == "air_pressure")]
+  LW <- met$pred_daily[which(met$variable == "surface_downwelling_shortwave_flux_in_air")]
+  SW <- met$pred_daily[which(met$variable == "surface_downwelling_longwave_flux_in_air")]
   #forecast
   x_ic <- ensemble$x_ic
   mu <- rep(NA, length(temp))
@@ -51,14 +22,60 @@ nee_forecast <- function(ensemble) {
       params["betaIntercept"] + 
       params["betaTemp"]*temp[t] + 
       params["betaPrecip"]*precip[t] + 
-      params["betahumid"]*humid[t]
+      params["betahumid"]*humid[t] +
+      params["betaSWFlux"]*SW[t] +
+      params["betaPress"]*Pres[t] +
+      params["betaLWFlux"]*LW[t]
     mu[t] <- rnorm(1, new_nee, 1/sqrt(params["tau_add"]))
   }
   mu
 }
-#run forecasts.
-mu <- ENS %>% purrr::map(nee_forecast) %>% dplyr::bind_cols() %>% as.data.frame() %>% `colnames<-`(time_points)
+#we can also setup ensemble sizes and sample from the parameter spaces.
+ens <- 1000
+#grab met data.
+#accessing GEFS.
+time_points <- seq(as.Date("2024-01-01"), as.Date("2024-01-31"), "1 day")
+met_variables <- c("precipitation_flux", 
+                   "air_temperature",
+                   "air_pressure",
+                   "relative_humidity", 
+                   "surface_downwelling_shortwave_flux_in_air",
+                   "surface_downwelling_longwave_flux_in_air")
+
+site_ensemble <- vector("list", length(params))
+#loop over sites
+for (i in seq_along(params)) {
+  #prep GEFs met.
+  met <- list()
+  print(paste0("Downloading GEFS weather forecasts from ", 
+               time_points[1], " to ", 
+               time_points[length(time_points)], 
+               " for ", params[[i]]$site_id))
+  #download GEFs
+  pb <- utils::txtProgressBar(min = 0, max = length(time_points), style = 3)
+  for (j in seq_along(time_points)) {
+    met[[j]] <- GEFS_download(date = time_points[j], site_name = params[[i]]$site_id, variables = met_variables, is.daily = T)
+    utils::setTxtProgressBar(pb, j)
+  }
+  met <- do.call(rbind, met)
+  #write parameters into ensembles
+  ENS <- vector("list", ens)
+  for (j in seq_along(ENS)) {
+    #sample met data
+    ens.met <- met[which(met$parameter == sample(1:31, 1)),]
+    ENS[[j]] <- list(params = params[[i]]$params[j,],
+                     met = ens.met,
+                     x_ic = params[[i]]$predict[j])
+  }
+  #forecast
+  mu <- ENS %>% purrr::map(nee_forecast) %>% dplyr::bind_cols() %>% as.data.frame() %>% `colnames<-`(time_points)
+  #store outputs
+  site_ensemble[[i]] <- list(data = ENS, forecast = mu)
+}
+
 #time series plot.
+#take BART for example
+mu <- site_ensemble[[2]]$forecast
 ci <- apply(mu,1,quantile,c(0.025,0.5,0.975)) ## model was fit on log scale
 plot(time_points, ci[3,], type="l", ylim=c(min(ci), max(ci)), xlab = "Date", ylab="NEE", main="NEE Forecasts")
 lines(time_points, ci[1,])
