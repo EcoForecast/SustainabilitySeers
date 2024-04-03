@@ -1,107 +1,76 @@
-library(rjags)
-library(daymetr)
+
 library(purrr)
-library(ncdf4)
-devtools::install_github("EcoForecast/ecoforecastR",force=TRUE)
+load("~/SustainabilitySeers/Data/calibration.Rdata")
+source("~/SustainabilitySeers/Data_Download_Functions/GEFS_download.R")
+#set initial value of NEE for the forecasts.
+x_ic <- 0.5177017
+#combine parameters from ef.out object.
+params <- do.call(rbind, ef.out$params)
+#we can also setup ensemble sizes and sample from the parameter spaces.
+if (TRUE) {
+  ens <- 100
+  sample.inds <- sample(seq_along(params[,1]), ens)
+  params <- params[sample.inds,]
+}
+#grab met data.
+# met <- as.data.frame(ef.out$data$Xf)#we will need to sample from GEFs in the future.
+# #remove na.
+# na.inds <- which(is.na(met[,2]))
+# met <- met[-na.inds,]
 
-#Get the data ----
-source("~/SustainabilitySeers/Data_Download_Functions/01_datatargetdownload.R")
+#accessing GEFS.
+time_points <- seq(as.Date("2021-01-01"), as.Date("2021-03-31"), "1 day")
+met_variables <- c("precipitation_flux", "air_temperature", "relative_humidity", "surface_downwelling_shortwave_flux_in_air")
 
-gc()
+met <- list()
+print(paste0("Downloading GEFS weather forecasts from ", time_points[1], " to ", time_points[length(time_points)]))
+pb <- utils::txtProgressBar(min = 0, max = length(time_points), style = 3)
+for (i in seq_along(time_points)) {
+  met[[i]] <- GEFS_download(date = time_points[i], site_name = "HARV", variables = met_variables, is.daily = T)
+  utils::setTxtProgressBar(pb, i)
+}
+met <- do.call(rbind, met)
 
-nee.df <- target1 %>% filter(variable=="nee")
-le.df <- target1 %>% filter(variable=="le")
-
-#define period.
-time.points <- seq(as.Date("2021-01-01"), as.Date("2021-12-31"), "1 day")
-df_past <- df_past %>% 
-  filter(lubridate::date(datetime) %in% time.points)
-
-met_all <- rbind(met_future, df_past)
-met_all <- met_all %>% tidyr::pivot_wider(
-  names_from=variable,
-  values_from=prediction
-)
-
-
-#grab NEE for one site
-nee.df.harv <- nee.df[which(nee.df$site_id == "HARV" & 
-                              lubridate::year(nee.df$datetime) == "2021" & 
-                              nee.df$variable == "nee"),]
-
-#match time for nee
-#realtime <- as.POSIXct(met_future$dim$time$vals*3600, origin = "2021-01-01", tz = "UTC")
-
-#calculate daily average.
-met_all <- met_all %>%
-  mutate(year=year(datetime),
-         month=month(datetime), 
-         day=day(datetime)) %>%
-  group_by(year, month, day, site_id) %>%
-  summarize(
-    temp_daily = mean(air_temperature, na.rm=T),
-    precip_daily = mean(precipitation_flux, na.rm=T),
-    humid_daily = mean(relative_humidity, na.rm=T),
-    pressure_daily = mean(air_pressure, na.rm=T)
-  ) %>%
-  mutate(date = ymd(paste0(year, "-", month, "-", day)))
-
-nee.df.daily <- nee.df %>%
-  mutate(year=year(datetime),
-         month=month(datetime), 
-         day=day(datetime)) %>%
-  group_by(year, month, day, site_id) %>%
-  summarize(
-    nee_daily = mean(observation, na.rm=T)
-  ) %>%
-  mutate(date = ymd(paste0(year, "-", month, "-", day)))
-
-merged_nee_met <- left_join(nee.df, met_all, by=c("year", "month", "day", "site_id"),
-                            relationship="many-to-one")
-
-nee_daily <- merged_nee_met$nee_daily
-precip_daily <- merged_nee_met$precip_daily
-temp_daily <- merged_nee_met$temp_daily
-humid_daily <- merged_nee_met$humid_daily
-
-#replace na
-na.ind <- which(is.na(nee.df.daily))
-nee.df.daily[na.ind] <- NA
-
-## fit the model
-data <- list(x_ic = mean(nee_daily, na.rm = T),
-             tau_ic = 1/sd(nee_daily, na.rm = T),
-             a_obs = 1,
-             r_obs = 1,
-             a_add = 1,
-             r_add = 1,
-             n = length(nee_daily),
-             y = nee_daily,
-             Precip = precip_daily,
-             Temp = temp_daily,
-             humid = humid_daily)
-
-ef.out <- ecoforecastR::fit_dlm(model=list(obs="y",fixed="~ 1 + X + Temp + Precip + humid"), data)
-out <- do.call(rbind, ef.out$predict)
-x.cols <- grep("^x",colnames(out)) ## grab all columns that start with the letter x
-ci <- apply(out[,x.cols],2,quantile,c(0.025,0.5,0.975)) ## model was fit on log scale
-
-#time series plot
-plot(days, ci[3,], type="l", ylim = range(nee_daily, na.rm = T), col=1, xlab="Date", ylab="NEE")
-lines(days, ci[1,], col=1)
-points(days, nee_daily, col=2, pch=20)
-legend("bottomleft", legend=c("CI", "NEE Observation"), lty=c(1,NA), col=c(1,2), pch=c(NA, 20))
-
-#diagnostics
-BGR <- gelman.plot(ef.out$params)
-
-plot(ef.out$params)
-
-effectiveSize(ef.out)
+ENS <- vector("list", ens)
+for (i in seq_along(ENS)) {
+  #sample met data
+  ens.met <- met[which(met$parameter == sample(1:31, 1)),]
+  ENS[[i]] <- list(params = params[i,],
+                   met = ens.met,
+                   x_ic = x_ic)
+}
+#function for the forecasts.
+nee_forecast <- function(ensemble) {
+  params <- ensemble$params
+  #grab met
+  met <- ensemble$met
+  temp <- met$pred_daily[which(met$variable == "air_temperature")]
+  precip <- met$pred_daily[which(met$variable == "precipitation_flux")]
+  humid <- met$pred_daily[which(met$variable == "relative_humidity")]
+  #forecast
+  x_ic <- ensemble$x_ic
+  mu <- rep(NA, length(temp))
+  mu[1] <- x_ic
+  for (t in 2:length(temp)) {
+    new_nee <- mu[t-1]  + 
+      params["betaX"]*mu[t-1] + 
+      params["betaIntercept"] + 
+      params["betaTemp"]*temp[t] + 
+      params["betaPrecip"]*precip[t] + 
+      params["betahumid"]*humid[t]
+    mu[t] <- new_nee
+  }
+  mu
+}
+#run forecasts.
+mu <- ENS %>% purrr::map(nee_forecast) %>% dplyr::bind_cols() %>% as.data.frame() %>% `colnames<-`(time_points)
+#time series plot.
+ci <- apply(mu,1,quantile,c(0.025,0.5,0.975)) ## model was fit on log scale
+plot(time_points, ci[3,], type="l", ylim=c(min(ci), max(ci)), xlab = "Date", ylab="NEE", main="NEE Forecasts")
+lines(time_points, ci[1,])
+lines(time_points, ci[2,], col=2)
 
 
-
-#Forward Simulation
 
 ##settings
 s <- 1
@@ -109,53 +78,34 @@ Nmc = 1000  #number of Monte Carlow draws
 ylim = range(nee_daily, na.rm = T)   #not sure what to set limits as
 N.cols <- c("black","red","green","blue","orange") ## set colors
 trans <- 0.8       ## set transparancy
-time = 1:(days*2)    ## total time
-time1 = 1:days       ## calibration period
+time = 1:length(temp)*2    ## total time
+time1 = 1:length(temp)       ## calibration period
 time2 = time1+days   ## forecast period
-
-#select one site
-plot.run <- function(){
-  sel = seq(s,ncol(ci),by=31)
-  plot(time,time,type='n',ylim=ylim,ylab="Y")
-  ecoforecastR::fit_dlm(model=list(obs="Y",fixed="~ 1 + X + Temp + Precip"), data)
-  lines(time1,ci[2,sel],col="blue")
-  points(time1,No[s,])
-}
-  
-ci <- apply(out[,x.cols],2,quantile,c(0.025,0.5,0.975))
-plot.run()
-
-
-forecastY <- function(x_ic,Precip,Temp,a_add=0,n=Nmc){
-  Y <- matrix(NA,n,days)  ## storage
-  Yprev <- x_ic          ## initialize
-  for(t in 1:days){
-    mu =    ## calculate mean (unsure what it should be)
-    Y[,t] <- rlnorm(n,mu,Q)   ## predict next step
-    Yprev <- Y[,t]        ## update IC
-  }
-  return(Y)
-}
 
 
 
 ### Deterministic Prediction
 
 ## calculate mean of all inputs
-precip.mean <- matrix(apply(precip_ensemble,2,mean),1,days) ## driver
+precip.mean <- matrix(apply(precip_ensemble,2,mean),1,days) ## drivers
 temp.mean <- matrix(apply(temp_ensemble,2,mean),1,days)
+humid.mean <- matrix(apply(humid_ensemble,2,mean),1,days)
 ## parameters
-params <- as.matrix(out$params)
+params <- do.call(rbind, ef.out$params)
 param.mean <- apply(params,2,mean)
 ## initial conditions
-IC <- as.matrix(out$predict)
+x_ic <- as.matrix(out$predict)
 
-Y.det <- forecastY(x_ic=mean(nee_daily, na.rm = T),  #unsure of length 
+Y.det <- forecastY(x_ic=mean(nee_daily, na.rm = T),  #unsure of length #do I change forecastY to forecastmu? 
                    precip=precip.mean,
                    temp = temp.mean,
-                   beta=param.mean["beta"],
-                   alpha=param.mean["alpha_site[6]"],     ##unsure what paramters should be
-                   a_add=0,  ## process error off
+                   humid = humid.mean,
+                   betaX=param.mean["betaX"]*mu[t-1], 
+                   betaIntercept=param.mean["betaIntercept"],
+                   betaTemp=param.mean["betaTemp"]*temp[t],
+                   betaPrecip=param.mean["betaPrecip"]*precip[t],
+                   betahumid= param.mean["betahumid"]*humid[t],
+                   a_add=0,  #process error off
                    n=1)
 
 ## Plot run
@@ -169,11 +119,15 @@ lines(time2,Y.det,col="purple",lwd=3)
 ##sample parameter rows from previous analysis
 prow = sample.int(nrow(params),Nmc,replace=TRUE)
 
-Y.I <-  forecastY(IC=IC[prow,"Y[1,...]"],  ## sample IC (posterier distribution, site 6 and unsure what year to pick) 
+Y.I <-  forecastY(x_ic=x_ic[prow,"Y[1,...]"],  ## sample IC (posterier distribution, site 6 and unsure what year to pick) 
                   precip=precip.mean,
                   temp=temp.mean,
-                  beta=param.mean["beta"],  #unsure what parameters should be 
-                  alpha=param.mean["alpha_site[6]"],
+                  humid=humid.mean,
+                  betaX=param.mean["betaX"]*mu[t-1], 
+                  betaIntercept=param.mean["betaIntercept"],
+                  betaTemp=param.mean["betaTemp"]*temp[t],
+                  betaPrecip=param.mean["betaPrecip"]*precip[t],
+                  betahumid= param.mean["betahumid"]*humid[t],
                   a_add=0,  #process error off
                   n=Nmc)
 
@@ -187,12 +141,16 @@ lines(time2,Y.I.ci[2,],lwd=0.5)
 
 ##Parameter Uncertainty 
 
-Y.IP <- forecastY(IC=IC[prow,"N[6,...]"],  ## sample IC
+Y.IP <- forecastY(x_ic=x_ic[prow,"N[6,...]"],  ## sample IC
                   precip=precip.mean,
-                  temp = temp.mean, 
-                  beta=params[prow,"beta"],     #unsure about parameters 
-                  alpha=params[prow,"alpha_site[6]"],
-                  a_add=0,
+                  temp=temp.mean,
+                  humid=humid.mean,
+                  betaX=params["betaX"]*mu[t-1], 
+                  betaIntercept=params["betaIntercept"],
+                  betaTemp=params["betaTemp"]*temp[t],
+                  betaPrecip=params["betaPrecip"]*precip[t],
+                  betahumid= params["betahumid"]*humid[t],
+                  a_add=0,  #process error off
                   n=Nmc)
 
 ## plot run
@@ -211,7 +169,7 @@ lines(time2,Y.I.ci[2,],lwd=0.5)
 #forecast precipitation 
 NE = 31    #NE is member ensemble of precipitation forecast 
 #{r,echo=FALSE}
-plot(time2,precip_ensemble[1,],type='n',ylim=range(precip_ensemble),xlab="time",ylab="precipitation (mm)")
+plot(time2,precip_ensemble[1,],type='n',ylim=range(precip_ensemble),xlab="Time",ylab="precipitation (mm)")
 for(i in 1:NE){  
   lines(time2,precip_ensemble[i,],lwd=0.5,col="grey")
 }
@@ -219,7 +177,14 @@ for(i in 1:NE){
 
 #forecast temperature 
 #{r,echo=FALSE}
-plot(time2,temp_ensemble[1,],type='n',ylim=range(temp_ensemble),xlab="time",ylab="Temperature")
+plot(time2,temp_ensemble[1,],type='n',ylim=range(temp_ensemble),xlab="Time",ylab="Temperature")
+for(i in 1:NE){  
+  lines(time2,temp_ensemble[i,],lwd=0.5,col="grey")
+}
+
+#forecast relative humidity
+#{r,echo=FALSE}
+plot(time2,humid_ensemble[1,],type='n',ylim=range(humid_ensemble),xlab="Time",ylab="Relative Humidity")
 for(i in 1:NE){  
   lines(time2,temp_ensemble[i,],lwd=0.5,col="grey")
 }
@@ -227,12 +192,16 @@ for(i in 1:NE){
 ## sample driver rows 
 drow = sample.int(nrow(precip_ensemble),Nmc,replace=TRUE)
 
-Y.IPD <- forecastY(IC=IC[prow,"N[6,...]"],  ## sample IC
-                   precip=precip_ensemble[drow,],   ## Sample drivers
-                   temp=temp_ensemble[drow,],
-                   beta=params[prow,"beta"],   #unsure about parameters 
-                   alpha=params[prow,"alpha_site[6]"],
-                   a_add=0,
+Y.IPD <- forecastY(x_ic=x_ic[prow,"N[6,...]"],  ## sample IC
+                   precip=precip_ensemble[drow],
+                   temp=temp_ensemble[drow],
+                   humid=humid_ensemble[drow],
+                   betaX=params["betaX"]*mu[t-1], 
+                   betaIntercept=params["betaIntercept"],
+                   betaTemp=params["betaTemp"]*temp[t],
+                   betaPrecip=params["betaPrecip"]*precip[t],
+                   betahumid= params["betahumid"]*humid[t],
+                   a_add=0,  #process error off
                    n=Nmc)
 
 ## Plot run
@@ -250,12 +219,16 @@ lines(time2,Y.I.ci[2,],lwd=0.5)
 ##process error samples 
 a_addmc <- 1/sqrt(params[prow,"a_add"])  ## convert from precision to standard deviation
 
-Y.IPDE <- forecastY(IC=IC[prow,"Y[6,...]"],  ## sample IC
-                    precip=precip_ensemble[drow,],   ## Sample drivers
-                    temp=temp_ensemble[drow,],
-                    beta=params[prow,"beta"],   #unsure about parameters 
-                    alpha=params[prow,"alpha_site[6]"],
-                    a_add=a_addmc,
+Y.IPDE <- forecastY(x_ic=x_ic[prow,"Y[6,...]"],  ## sample IC
+                    precip=precip.mean,
+                    temp=temp.mean,
+                    humid=humid.mean,
+                    betaX=params["betaX"]*mu[t-1], 
+                    betaIntercept=params["betaIntercept"],
+                    betaTemp=params["betaTemp"]*temp[t],
+                    betaPrecip=params["betaPrecip"]*precip[t],
+                    betahumid= params["betahumid"]*humid[t],
+                    a_add=a_addmc,  #process error
                     n=Nmc)
 
 ## Plot run
