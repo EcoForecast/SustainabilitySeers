@@ -38,9 +38,9 @@ merged_nee_met <- left_join(daily.nee, merged_noaa_daily2, by=c("date", "site_id
 merged_nee_met_sub <- merged_nee_met %>% filter(lubridate::year(date)>= 2023)
 
 # Investigate NA values for met
-na <- merged_nee_met %>% filter(is.na(predict_daily))
-na_dates <- na$date
-na_met <- merged_noaa %>% filter(ymd(date) %in% na_dates) # none, so these must just be missing from NOAA?
+# na <- merged_nee_met %>% filter(is.na(predict_daily))
+# na_dates <- na$date
+# na_met <- merged_noaa %>% filter(ymd(date) %in% na_dates) # none, so these must just be missing from NOAA?
 
 # in future iterations, maybe we impute these values?
 
