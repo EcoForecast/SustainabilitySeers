@@ -20,4 +20,4 @@ jobs:
       - name: Run
         run: |
           # Run forecas1
-          Rscript 03_forecast 
+          Rscript 03_forecast.R 
