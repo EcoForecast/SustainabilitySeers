@@ -75,8 +75,34 @@ for (i in seq_along(params)) {
 
 #time series plot.
 #take BART for example
-mu <- site_ensemble[[2]]$forecast
+mu <- site_ensemble[[1]]$forecast
 ci <- apply(mu,1,quantile,c(0.025,0.5,0.975)) ## model was fit on log scale
 plot(time_points, ci[3,], type="l", ylim=c(min(ci), max(ci)), xlab = "Date", ylab="NEE", main="NEE Forecasts")
+ecoforecastR::ciEnvelope(time_points,ci[1,],ci[3,],col=ecoforecastR::col.alpha("lightBlue",0.75))
 lines(time_points, ci[1,])
 lines(time_points, ci[2,], col=2)
+
+# Plot OSBS
+mu2 <- site_ensemble[[2]]$forecast
+ci2 <- apply(mu2,1,quantile,c(0.025,0.5,0.975)) ## model was fit on log scale
+plot(time_points, ci2[3,], type="l", ylim=c(min(ci2), max(ci2)), xlab = "Date", ylab="NEE", main="NEE Forecasts")
+ecoforecastR::ciEnvelope(time_points,ci2[1,],ci2[3,],col=ecoforecastR::col.alpha("lightBlue",0.75))
+lines(time_points, ci2[1,])
+lines(time_points, ci2[2,], col=2)
+
+# Plot KONZ
+mu3 <- site_ensemble[[3]]$forecast
+ci3 <- apply(mu3,1,quantile,c(0.025,0.5,0.975)) ## model was fit on log scale
+plot(time_points, ci3[3,], type="l", ylim=c(min(ci3), max(ci3)), xlab = "Date", ylab="NEE", main="NEE Forecasts")
+ecoforecastR::ciEnvelope(time_points,ci3[1,],ci3[3,],col=ecoforecastR::col.alpha("lightBlue",0.75))
+lines(time_points, ci3[1,])
+lines(time_points, ci3[2,], col=2)
+
+# Plot SRER
+mu4 <- site_ensemble[[4]]$forecast
+ci4 <- apply(mu4,1,quantile,c(0.025,0.5,0.975)) ## model was fit on log scale
+plot(time_points, ci4[3,], type="l", ylim=c(min(ci4), max(ci4)), xlab = "Date", ylab="NEE", main="NEE Forecasts")
+ecoforecastR::ciEnvelope(time_points,ci4[1,],ci4[3,],col=ecoforecastR::col.alpha("lightBlue",0.75))
+lines(time_points, ci4[1,])
+lines(time_points, ci4[2,], col=2)
+
