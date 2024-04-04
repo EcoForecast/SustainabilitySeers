@@ -11,13 +11,7 @@ jobs:
     container:
       image: eco4cast/rocker-neon4cast
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v2
-
-      - name: List contents of data directory
-        run: ls
-
-      - name: Run
+         - name: Run
         run: |
           # Run forecas1
           Rscript 03_forecast.R 
