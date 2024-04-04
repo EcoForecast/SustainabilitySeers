@@ -1,3 +1,5 @@
+name: Schedule forecast (daily)
+
 on:
   schedule:
     - cron: "0 0 * * *" # This schedule runs the workflow daily at midnight UTC
@@ -10,9 +12,14 @@ jobs:
     runs-on: ubuntu-latest
     container:
       image: eco4cast/rocker-neon4cast
-      
     steps:
-         - name: Run
+      - name: Checkout repository
+        uses: actions/checkout@v1
+
+      - name: List contents of data directory
+        run: ls
+
+      - name: Run forecast
         run: |
-          # Run forecas1
+          # Fetch data for the new period
           Rscript 03_forecast.R 
