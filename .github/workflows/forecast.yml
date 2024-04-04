@@ -1,0 +1,23 @@
+on:
+  schedule:
+    - cron: "0 0 * * *" # This schedule runs the workflow daily at midnight UTC
+  workflow_dispatch:
+    branches:
+      - main
+
+jobs:
+  run_download_script:
+    runs-on: ubuntu-latest
+    container:
+      image: eco4cast/rocker-neon4cast
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: List contents of data directory
+        run: ls
+
+      - name: Run
+        run: |
+          # Run forecas1
+          Rscript 03_forecast 
