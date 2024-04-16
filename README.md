@@ -32,8 +32,8 @@ Phone number: (603)707-6791
       b. **forecast_code**: includes scripts that define ensemble forecast, run data assimilation (via Kalman filter), and submit forecast to NEON website
 
 
-#Milestone 5: SustainabilitySeers
-#Dongchen, Tessa, Breanna
+### Milestone 5: SustainabilitySeers
+Authors: Dongchen, Tessa, Breanna
 
 
 #Data Model
