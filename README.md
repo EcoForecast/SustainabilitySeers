@@ -19,17 +19,17 @@ Email: klosada@bu.edu
 Phone number: (603)707-6791
 
 ### **File Structure:**
-1. Data --
+##1. Data --
 
     a. **Data_Download_Functions**: includes scripts that define functions for pulling MODIS data
 
     b. **data_dowload_code**: includes scripts that pull data from various sources (NOAA, EFI, NEON); also includes a folder with .Rdata files of ensemble parameters
   
-3. Forecast --
+##3. Forecast --
 
-  a. **calibration_code**: includes scripts that have calibration code for dynamic linear model (DLM) and random walk
+      a. **calibration_code**: includes scripts that have calibration code for dynamic linear model (DLM) and random walk
 
-  b. **forecast_code**: includes scripts that define ensemble forecast, run data assimilation (via Kalman filter), and submit forecast to NEON website
+      b. **forecast_code**: includes scripts that define ensemble forecast, run data assimilation (via Kalman filter), and submit forecast to NEON website
 
 
 #Milestone 5: SustainabilitySeers
