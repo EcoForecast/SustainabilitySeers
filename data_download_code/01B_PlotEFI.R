@@ -16,25 +16,7 @@ library(readr)
 library(tidyr)
 library(tidyverse)
 
-# Define functions ----
-##' Download Targets for Terrestrial 
-##' @return data.frame in long format with days as rows, and time, site_id, variable, and observed as columns
-download_targets <- function(){
-  readr::read_csv("https://sdsc.osn.xsede.org/bio230014-bucket01/challenges/targets/project_id=neon4cast/duration=PT30M/terrestrial_30min-targets.csv.gz", guess_max = 1e6)
-}
-
-##' Download Site metadata
-##' @return metadata dataframe
-download_site_meta <- function(){
-  site_data <- readr::read_csv("https://raw.githubusercontent.com/eco4cast/neon4cast-targets/main/NEON_Field_Site_Metadata_20220412.csv") 
-  site_data %>% filter(as.integer(terrestrial) == 1)
-}
-
-# Collect data ----
-# Run functions to collect data
-target1 <- download_targets()       ## Y variables
-sites <- unique(target1$site_id)
-site_data  <- download_site_meta()
+source("~/SustainabilitySeers/data_download_code/01_datatargetdownload.R") # get data
 
 # Filter data ----
 # Select only target sites BART, OSBS, KONZ, SRER

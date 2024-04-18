@@ -1,6 +1,11 @@
 library(purrr)
-load("~/SustainabilitySeers/Data/ensembleParameters.Rdata")
+load("~/SustainabilitySeers/data_download_code/data/ensembleParameters.Rdata")
 source("~/SustainabilitySeers/Data_Download_Functions/GEFS_download.R")
+
+# Load covariate data ----
+source("~/SustainabilitySeers/data_download_code/01_datatargetdownload.R") # NEE
+source("~/SustainabilitySeers/data_download_code/01A_NOAA_datadownload.R") # weather
+
 #function for the forecasts.
 nee_forecast <- function(ensemble) {
   params <- ensemble$params
