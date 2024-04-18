@@ -10,7 +10,7 @@ submit_forecast <- function(forecast,team_info,submit=FALSE){
 
   #Forecast output file name in standards requires for Challenge.
   # csv.gz means that it will be compressed
-  forecast_file <- paste0("terrestrial","-",min(time_points),"-",team_info$SustainabilitySeers,".csv.gz")
+  forecast_file <- paste0("terrestrial_daily","-",min(time_points),"-",team_info$SustainabilitySeers,".csv.gz")
 
   ## final format tweaks for submission
   forecast = forecast |> mutate(model_id = team_info$SustainabilitySeers, family="ensemble") |>
@@ -81,9 +81,8 @@ team_info <- list(
 )
 
 
-load("~/SustainabilitySeers/Data/site_ensemble.Rdata")
+load("./data_download_code/data/site_ensemble.Rdata")
 site_ensemble # figure out how to make this into a format that can be submitted.
 
-
 # Submit forecast
-submit_forecast(combined_forecasts, team_info, submit = FALSE) # Assuming you want to submit the forecast immediately
+submit_forecast(site_ensemble, team_info, submit = FALSE) # Assuming you want to submit the forecast immediately
