@@ -115,7 +115,7 @@ for(i in 1:nsite){
   ecoforecastR::ciEnvelope(time_points,ci[1,],ci[2,],col="lightBlue")
   lines(time_points,mu.a[i,],col=4)
   points(time_points,nee.mean[i,],col="red")
-  legend("topleft", lty=1, col=c("black", "lightBlue"), legend = c("Observation", "Analysis"))
+  legend("topleft", lty=c(NA,1), pch=c("o", NA), col=c("red", "lightBlue"), legend = c("Observation", "Forecast"))
 }
 
 
