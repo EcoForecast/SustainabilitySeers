@@ -22,7 +22,11 @@ KalmanAnalysis <- function(mu.f,P.f,Y,R,H,I){
   obs = !is.na(Y) ## which Y's were observed?
   if(any(obs)){
     H <- H[obs,]                                              ## observation matrix
-    K <- P.f %*% t(H) %*% solve(H%*%P.f%*%t(H) + R[obs,obs])  ## Kalman gain
+    if (dim(t(H))[1] == 1) {
+      K <- P.f %*% t(t(H)) %*% solve(H%*%P.f%*%t(t(H)) + R[obs,obs])  ## Kalman gain
+    } else{
+      K <- P.f %*% t(H) %*% solve(H%*%P.f%*%t(H) + R[obs,obs])  ## Kalman gain
+    }
     mu.a <- mu.f + K%*%(Y[obs] - H %*% mu.f)                  ## update mean
     P.a <- (I - K %*% H)%*%P.f                                ## update covariance
     ## Note: Here's an alternative form that doesn't use the Kalman gain
@@ -59,7 +63,6 @@ for (id in seq_along(site)) {
 }
 
 # data assimilation
-#load("~/SustainabilitySeers/Data/site_ensemble.Rdata")
 ens <- 1000
 mu.f  = matrix(NA,nsite,nt+1)  ## forecast mean for time t
 mu.a  = matrix(NA,nsite,nt)  ## analysis mean for time t
@@ -111,7 +114,7 @@ for(i in 1:nsite){
   plot(time_points,mu.a[i,],ylim=range(ci,na.rm=TRUE),type='n',main=site_ids[i],xlab="Date",ylab="NEE")
   ecoforecastR::ciEnvelope(time_points,ci[1,],ci[2,],col="lightBlue")
   lines(time_points,mu.a[i,],col=4)
-  lines(time_points,nee.mean[i,])
+  points(time_points,nee.mean[i,],col="red")
   legend("topleft", lty=1, col=c("black", "lightBlue"), legend = c("Observation", "Analysis"))
 }
 

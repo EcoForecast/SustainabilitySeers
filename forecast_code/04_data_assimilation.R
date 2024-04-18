@@ -1,5 +1,5 @@
 library(purrr)
-load("~/SustainabilitySeers/Data/ensembleParameters.Rdata")
+load("~/SustainabilitySeers/data_download_code/data/ensembleParameters.Rdata")
 source("~/SustainabilitySeers/Data_Download_Functions/GEFS_download.R")
 #Get the data ----
 nee <- readr::read_csv("https://sdsc.osn.xsede.org/bio230014-bucket01/challenges/targets/project_id=neon4cast/duration=PT30M/terrestrial_30min-targets.csv.gz", guess_max = 1e6)
@@ -101,7 +101,7 @@ for (id in seq_along(site_ids)) {
 }
 
 # data assimilation
-load("~/SustainabilitySeers/Data/site_ensemble.Rdata")
+load("~/SustainabilitySeers/data_download_code/data/site_ensemble.Rdata")
 ens <- 1000
 mu.f  = matrix(NA,nsite,nt+1)  ## forecast mean for time t
 mu.a  = matrix(NA,nsite,nt)  ## analysis mean for time t
