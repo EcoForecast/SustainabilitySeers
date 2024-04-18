@@ -20,9 +20,13 @@ site_ensemble <- vector("list", length(params))
 ens <- 1000
 
 #grab met data.
-  met <- merged_noaa_daily
+merged_noaa_daily <- merged_noaa_daily %>%
+  dplyr::filter(lubridate::as_date(date)>=start,
+                lubridate::as_date(date)<=end)
 
 for (i in seq_along(params)) {
+  met <- merged_noaa_daily[which(merged_noaa_daily$site_id == params[[i]]$site_id), 2:5] %>% 
+    `colnames<-`(c("variable", "parameter", "pred_daily", "datetime"))
   #write parameters into ensembles
   ENS <- vector("list", ens)
     for (j in seq_along(ENS)) {
