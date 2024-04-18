@@ -22,4 +22,4 @@ jobs:
       - name: Run forecast
         run: |
           # Fetch data for the new period
-          Rscript forecast_code/03_forecast.R 
+          Rscript forecast_code/03_forecast_v2.R 
