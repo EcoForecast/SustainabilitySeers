@@ -1,0 +1,26 @@
+
+name: Daily NOAA Data Download
+
+on:
+  schedule:
+    - cron: "0 0 * * *" # This schedule runs the workflow daily at midnight UTC
+  workflow_dispatch:
+    branches:
+      - main
+
+jobs:
+  run_download_script:
+    runs-on: ubuntu-latest
+    container:
+      image: eco4cast/rocker-neon4cast
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: List contents of data directory
+        run: ls
+
+      - name: Run
+        run: |
+          # Fetch data for the new period
+          Rscript data_download_code/01A_NOAA_datadownload.R 
