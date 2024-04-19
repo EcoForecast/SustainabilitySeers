@@ -1,25 +1,19 @@
-name: Schedule forecast (daily)
-
 on:
-  schedule:
-    - cron: "0 0 * * *" # This schedule runs the workflow daily at midnight UTC
   workflow_dispatch:
-    branches:
-      - main
+  schedule:
+  - cron: "0 20 * * *"
 
 jobs:
-  run_download_script:
+  build:
     runs-on: ubuntu-latest
     container:
       image: eco4cast/rocker-neon4cast
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v1
-
-      - name: List contents of data directory
-        run: ls
-
-      - name: Run forecast
-        run: |
-          # Fetch data for the new period
-          Rscript forecast_code/04_data_assimilation_v2.R 
+      - name: Checkout repo
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+          
+# Point to the right path, run the right Rscript command
+      - name: Run daily forecast
+        run: Rscript forecast_code/04_data_assimilation_v2.R 
