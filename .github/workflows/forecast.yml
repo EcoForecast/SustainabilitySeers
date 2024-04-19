@@ -1,3 +1,4 @@
+name: Run data assimilation (daily)
 on:
   workflow_dispatch:
   schedule:
