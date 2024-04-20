@@ -30,9 +30,13 @@ noaa_date <- Sys.Date() - days(1)  #Need to use yesterday's NOAA forecast becaus
 ##' @return dataframe
 download_met_forecast <- function(forecast_date){
   noaa_date <- forecast_date - lubridate::days(1)  #Need to use yesterday's NOAA forecast because today's is not available yet
-  
+  print(type(noaa_date))
   ## connect to data
-  df_future <- neon4cast::noaa_stage2(start_date = as.character(noaa_date))
+  df_future <- neon4cast::noaa_stage2(cycle = 0,
+  version = "v12",
+  endpoint = NA,
+  verbose = TRUE,
+  start_date = noaa_date)
   
   ## filter available forecasts by date and variable
   met_future <- df_future |> 
