@@ -1,4 +1,4 @@
-name: Run forecast (daily)
+name: Run data assimilation (daily)
 on:
   workflow_dispatch:
   schedule:
@@ -16,5 +16,5 @@ jobs:
           fetch-depth: 0
           
 # Point to the right path, run the right Rscript command
-      - name: Run forecast 
-        run: Rscript forecast_code/03_forecast_v2.R
+      - name: Run daily assimilation
+        run: Rscript forecast_code/04_data_assimilation_v2.R 
