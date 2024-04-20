@@ -68,7 +68,7 @@ met_future <- download_met_forecast(forecast_date)
 met_future_sel <- met_future %>% filter(site_id %in% sites_sel)
 
 ##' append historical meteorological data into target file
-df_past <- neon4cast::noaa_stage3() %>%
+df_past <- neon4cast::noaa_stage3(version = "v12", endpoint = "data.ecoforecast.org", verbose = TRUE) %>%
   dplyr::filter(site_id %in% sites_sel,
                 lubridate::year(datetime) >= 2020,
                 variable %in% c("air_pressure", "air_temperature",
