@@ -1,16 +1,16 @@
 #load ensemble parameters
-load("~/SustainabilitySeers/data_download_code/data/ensembleParameters.Rdata")
-source("~/SustainabilitySeers/Data_Download_Functions/GEFS_download.R")
+load("data_download_code/data/ensembleParameters.Rdata")
+source("Data_Download_Functions/GEFS_download.R")
 
 # Load covariate data ----
-source("~/SustainabilitySeers/data_download_code/01_datatargetdownload.R") # NEE
-source("~/SustainabilitySeers/data_download_code/01A_NOAA_datadownload.R") # weather
+source("data_download_code/01_datatargetdownload.R") # NEE
+source("data_download_code/01A_NOAA_datadownload.R") # weather
 
 #Load forecast function
-source("~/SustainabilitySeers/forecast_code/forecast_function.R")
+source("forecast_code/forecast_function.R")
 
 # Load forcast outputs
-source("~/SustainabilitySeers/forecast_code/03_forecast_v2.R")
+source("forecast_code/03_forecast_v2.R")
 
 ##' Kalman Filter: Analysis step
 ##' @param  mu.f = Forecast mean (vector)

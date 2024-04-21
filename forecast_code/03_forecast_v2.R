@@ -1,14 +1,14 @@
 library(purrr)
 library(lubridate)
-load("~/SustainabilitySeers/data_download_code/data/ensembleParameters.Rdata")
-source("~/SustainabilitySeers/Data_Download_Functions/GEFS_download.R")
+load("data_download_code/data/ensembleParameters.Rdata")
+source("Data_Download_Functions/GEFS_download.R")
 
 # Load covariate data ----
-source("~/SustainabilitySeers/data_download_code/01_datatargetdownload.R") # NEE
-source("~/SustainabilitySeers/data_download_code/01A_NOAA_datadownload.R") # weather
+source("data_download_code/01_datatargetdownload.R") # NEE
+source("data_download_code/01A_NOAA_datadownload.R") # weather
 
 #Load forecast function
-source("~/SustainabilitySeers/forecast_code/forecast_function.R") 
+source("forecast_code/forecast_function.R")
 
 # Define forecast time period
 start <- Sys.Date()-30

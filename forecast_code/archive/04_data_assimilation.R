@@ -1,6 +1,6 @@
 library(purrr)
-load("~/SustainabilitySeers/data_download_code/data/ensembleParameters.Rdata")
-source("~/SustainabilitySeers/Data_Download_Functions/GEFS_download.R")
+load("data_download_code/data/ensembleParameters.Rdata")
+source("Data_Download_Functions/GEFS_download.R")
 #Get the data ----
 nee <- readr::read_csv("https://sdsc.osn.xsede.org/bio230014-bucket01/challenges/targets/project_id=neon4cast/duration=PT30M/terrestrial_30min-targets.csv.gz", guess_max = 1e6)
 site_ids <- params %>% purrr::map('site_id') %>% unlist
