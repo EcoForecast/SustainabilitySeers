@@ -1,0 +1,20 @@
+name: Run main R script (data pull and forecast)
+on:
+  workflow_dispatch:
+  schedule:
+  - cron: "0 20 * * *"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    container:
+      image: eco4cast/rocker-neon4cast
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+          
+# Point to the right path, run the right Rscript command
+      - name: Run daily assimilation
+        run: Rscript main.R 
