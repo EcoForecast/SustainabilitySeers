@@ -123,7 +123,7 @@ merged_noaa_daily <- merged_noaa %>%
 
 # Step 3 -- FORECAST ----
 #Load params 
-load("/data_download_code/data/ensembleParameters.Rdata")
+load("data_download_code/data/ensembleParameters.Rdata")
 
 #Load forecast function
 source("/forecast_code/forecast_function.R") 
