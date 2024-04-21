@@ -126,7 +126,7 @@ merged_noaa_daily <- merged_noaa %>%
 load("data_download_code/data/ensembleParameters.Rdata")
 
 #Load forecast function
-source("/forecast_code/forecast_function.R") 
+source("forecast_code/forecast_function.R") 
 
 # Define forecast time period
 start <- Sys.Date()-30
