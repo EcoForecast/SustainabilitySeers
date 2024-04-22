@@ -307,6 +307,15 @@ for(i in 1:nsite){
   legend("topleft", lty=c(NA,1), pch=c("o", NA), col=c("red", "lightBlue"), legend = c("Observation", "Forecast"))
 }
 
+#Save as .RData
+wd <- "forecast_code/output/"
+year <- year(Sys.Date())
+month <- month(Sys.Date())
+day <- day(Sys.Date())
+saveRDS(sie_ensemble, paste0(wd, "terrestrial_daily-", year, "-", month,
+                                             "-", day, "-sustainseers.RData"))
+
+
 # STEP 5 -- SUBMIT FORECAST ----
 
 ##' Save forecast and metadata to file, submit forecast to EFI
