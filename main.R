@@ -447,6 +447,9 @@ final_forecast <- final_forecast %>% mutate(site_id = case_when(
   site_id==2 ~ "OSBS",
   site_id==3 ~ "KONZ",
   site_id==4 ~ "SRER"
+  
+  final_forecast_filtered <- final_forecast %>%
+    filter(datetime >= Sys.Date())
 ))
 
 # save forecast
