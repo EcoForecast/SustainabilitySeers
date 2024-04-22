@@ -307,6 +307,15 @@ for(i in 1:nsite){
   legend("topleft", lty=c(NA,1), pch=c("o", NA), col=c("red", "lightBlue"), legend = c("Observation", "Forecast"))
 }
 
+#Save as .RData
+wd <- "forecast_code/output/"
+year <- year(Sys.Date())
+month <- month(Sys.Date())
+day <- day(Sys.Date())
+saveRDS(sie_ensemble, paste0(wd, "terrestrial_daily-", year, "-", month,
+                                             "-", day, "-sustainseers.RData"))
+
+
 # STEP 5 -- SUBMIT FORECAST ----
 
 ##' Save forecast and metadata to file, submit forecast to EFI
@@ -441,9 +450,9 @@ final_forecast <- final_forecast %>% mutate(site_id = case_when(
 ))
 
 # save forecast
-#wd <- "~forecast_code/output/"
-#final_forecastcsv <- write.csv(final, paste0(wd, "terrestrial_daily-", year, "-", month,
-#                                            "-", day, "-sustainseers.csv.gz")) # figure out how to make this into a format that can be submitted.
+wd <- "forecast_code/output/"
+final_forecastcsv <- write.csv(final, paste0(wd, "terrestrial_daily-", year, "-", month,
+                                            "-", day, "-sustainseers.csv.gz")) # figure out how to make this into a format that can be submitted.
 
 # Submit forecast
 submit_forecast(final_forecast, team_info, submit = TRUE) # Assuming you want to submit the forecast immediately
