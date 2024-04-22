@@ -312,7 +312,7 @@ wd <- "forecast_code/output/"
 year <- year(Sys.Date())
 month <- month(Sys.Date())
 day <- day(Sys.Date())
-saveRDS(sie_ensemble, paste0(wd, "terrestrial_daily-", year, "-", month,
+saveRDS(site_ensemble, paste0(wd, "terrestrial_daily-", year, "-", month,
                                              "-", day, "-sustainseers.RData"))
 
 
