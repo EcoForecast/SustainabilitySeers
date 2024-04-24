@@ -454,8 +454,9 @@ final_forecast <- final_forecast %>% mutate(site_id = case_when(
 
 # save forecast
 wd <- "forecast_code/output/"
-final_forecastcsv <- write.csv(final, paste0(wd, "terrestrial_daily-", year, "-", month,
+final_forecastcsv <- write.csv(final_forecast_filtered, paste0(wd, "terrestrial_daily-", year, "-", month,
                                             "-", day, "-sustainseers.csv.gz")) # figure out how to make this into a format that can be submitted.
 
 # Submit forecast
-submit_forecast(final_forecast, team_info, submit = TRUE) # Assuming you want to submit the forecast immediately
+submit_forecast(final_forecast_filtered, team_info, submit = TRUE) # Assuming you want to submit the forecast immediately
+
