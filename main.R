@@ -118,9 +118,6 @@ merged_noaa_daily <- merged_noaa %>%
   mutate(date = ymd(paste0(year, "-", month, "-", day))) %>%
   select(-c(year, month, day))
 
-# Step 2 - CALIBRATION ----
-
-
 # Step 3 -- FORECAST ----
 #Load params 
 load("data_download_code/data/ensembleParameters.Rdata")
@@ -130,7 +127,7 @@ source("forecast_code/forecast_function.R")
 
 # Define forecast time period
 start <- Sys.Date()-30
-end <- Sys.Date()
+end <- Sys.Date() + 35
 
 time_points <- seq(start, end, "1 day")
 site_ensemble <- vector("list", length(params))
@@ -163,40 +160,39 @@ for (i in seq_along(params)) {
   site_ensemble[[i]] <- list(data = ENS, forecast = mu)
 }
 
-
-
+time_pointsx <- time_points[-66]
 #time series plot.
 #take BART for example
 mu <- site_ensemble[[1]]$forecast
-ci <- apply(mu,1,quantile,c(0.025,0.5,0.975)) ## model was fit on log scale
-plot(time_points, ci[3,], type="l", ylim=c(min(ci), max(ci)), xlab = "Date", ylab="NEE", main="NEE Forecasts -- BART")
-ecoforecastR::ciEnvelope(time_points,ci[1,],ci[3,],col=ecoforecastR::col.alpha("lightBlue",0.75))
-lines(time_points, ci[1,])
-lines(time_points, ci[2,], col=2)
+ci <- apply(mu,1,quantile,c(0.025,0.5,0.975))
+plot(time_pointsx, ci[3,], type="l", ylim=c(min(ci), max(ci)), xlab = "Date", ylab="NEE", main="NEE Forecasts -- BART")
+ecoforecastR::ciEnvelope(time_pointsx,ci[1,],ci[3,],col=ecoforecastR::col.alpha("lightBlue",0.75))
+lines(time_pointsx, ci[1,])
+lines(time_pointsx, ci[2,], col=2)
 
 # Plot OSBS
 mu2 <- site_ensemble[[2]]$forecast
 ci2 <- apply(mu2,1,quantile,c(0.025,0.5,0.975)) ## model was fit on log scale
-plot(time_points, ci2[3,], type="l", ylim=c(min(ci2), max(ci2)), xlab = "Date", ylab="NEE", main="NEE Forecasts -- OSBS")
-ecoforecastR::ciEnvelope(time_points,ci2[1,],ci2[3,],col=ecoforecastR::col.alpha("lightBlue",0.75))
-lines(time_points, ci2[1,])
-lines(time_points, ci2[2,], col=2)
+plot(time_pointsx, ci2[3,], type="l", ylim=c(min(ci2), max(ci2)), xlab = "Date", ylab="NEE", main="NEE Forecasts -- OSBS")
+ecoforecastR::ciEnvelope(time_pointsx,ci2[1,],ci2[3,],col=ecoforecastR::col.alpha("lightBlue",0.75))
+lines(time_pointsx, ci2[1,])
+lines(time_pointsx, ci2[2,], col=2)
 
 # Plot KONZ
 mu3 <- site_ensemble[[3]]$forecast
 ci3 <- apply(mu3,1,quantile,c(0.025,0.5,0.975)) ## model was fit on log scale
-plot(time_points, ci3[3,], type="l", ylim=c(min(ci3), max(ci3)), xlab = "Date", ylab="NEE", main="NEE Forecasts -- KONZ")
-ecoforecastR::ciEnvelope(time_points,ci3[1,],ci3[3,],col=ecoforecastR::col.alpha("lightBlue",0.75))
-lines(time_points, ci3[1,])
-lines(time_points, ci3[2,], col=2)
+plot(time_pointsx, ci3[3,], type="l", ylim=c(min(ci3), max(ci3)), xlab = "Date", ylab="NEE", main="NEE Forecasts -- KONZ")
+ecoforecastR::ciEnvelope(time_pointsx,ci3[1,],ci3[3,],col=ecoforecastR::col.alpha("lightBlue",0.75))
+lines(time_pointsx, ci3[1,])
+lines(time_pointsx, ci3[2,], col=2)
 
 # Plot SRER
 mu4 <- site_ensemble[[4]]$forecast
 ci4 <- apply(mu4,1,quantile,c(0.025,0.5,0.975)) ## model was fit on log scale
-plot(time_points, ci4[3,], type="l", ylim=c(min(ci4), max(ci4)), xlab = "Date", ylab="NEE", main="NEE Forecasts -- SRER")
-ecoforecastR::ciEnvelope(time_points,ci4[1,],ci4[3,],col=ecoforecastR::col.alpha("lightBlue",0.75))
-lines(time_points, ci4[1,])
-lines(time_points, ci4[2,], col=2)
+plot(time_pointsx, ci4[3,], type="l", ylim=c(min(ci4), max(ci4)), xlab = "Date", ylab="NEE", main="NEE Forecasts -- SRER")
+ecoforecastR::ciEnvelope(time_pointsx,ci4[1,],ci4[3,],col=ecoforecastR::col.alpha("lightBlue",0.75))
+lines(time_pointsx, ci4[1,])
+lines(time_pointsx, ci4[2,], col=2)
 
 
 # STEP 4 -- KALMAN FILTER ----
@@ -302,7 +298,7 @@ for(i in 1:nsite){
   ci = rbind(mu.a[i,]-1.96*sqrt(P.a[i,i,]),mu.a[i,]+1.96*sqrt(P.a[i,i,]))
   plot(time_points,mu.a[i,],ylim=range(ci,na.rm=TRUE),type='n',main=site_ids[i],xlab="Date",ylab="NEE")
   ecoforecastR::ciEnvelope(time_points,ci[1,],ci[2,],col="lightBlue")
-  lines(time_points,mu.a[i,],col=4)
+  lines(time_points,mu.a[i,],col=4, lw=2)
   points(time_points,nee.mean[i,],col="red")
   legend("topleft", lty=c(NA,1), pch=c("o", NA), col=c("red", "lightBlue"), legend = c("Observation", "Forecast"))
 }
@@ -428,7 +424,7 @@ for (i in seq(site_ensemble)){
       values_to = "prediction"
     ) %>%
     mutate(datetime = ymd(datetime)) %>%
-    mutate(parameter = rep(c(1:1000), 31),
+    mutate(parameter = rep(c(1:1000), 65),
            site_id = i,
            variable="nee",
            duration = "P1D",
@@ -446,13 +442,17 @@ final_forecast <- final_forecast %>% mutate(site_id = case_when(
   site_id==1 ~ "BART",
   site_id==2 ~ "OSBS",
   site_id==3 ~ "KONZ",
-  site_id==4 ~ "SRER"
-))
+  site_id==4 ~ "SRER"))
+  
+final_forecast_filtered <- final_forecast %>%
+  filter(datetime >= Sys.Date()) %>%
+  filter(datetime < Sys.Date()+days(35))
 
 # save forecast
 wd <- "forecast_code/output/"
-final_forecastcsv <- write.csv(final, paste0(wd, "terrestrial_daily-", year, "-", month,
+final_forecastcsv <- write.csv(final_forecast_filtered, paste0(wd, "terrestrial_daily-", year, "-", month,
                                             "-", day, "-sustainseers.csv.gz")) # figure out how to make this into a format that can be submitted.
 
 # Submit forecast
-submit_forecast(final_forecast, team_info, submit = TRUE) # Assuming you want to submit the forecast immediately
+submit_forecast(final_forecast_filtered, team_info, submit = TRUE) # Assuming you want to submit the forecast immediately
+
