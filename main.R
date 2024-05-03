@@ -228,22 +228,22 @@ KalmanAnalysis <- function(mu.f,P.f,Y,R,H,I){
 
 # Start data assimilation
 # define period
-nt <- length(time_points)
+nt <- length(time_pointsx)
 nee <- target1 %>% filter(variable=="nee")
 nsite <- length(site)
 site_ids <- site
 
 # filter nee observations
-nee.filter <- nee %>% dplyr::filter(datetime %in% time_points) 
+nee.filter <- nee %>% dplyr::filter(datetime %in% time_pointsx) 
 
 # convert nee to a more generalized data frame
 nee.mean <- nee.sd <- data.frame(matrix(NA, nrow = nsite, ncol = nt)) %>%
   `rownames<-`(site) %>%
-  `colnames<-`(time_points)
+  `colnames<-`(time_pointsx)
 ## assume constant standard error for test run. ##
 nee.sd[,] <- 0.2
 for (id in seq_along(site)) {
-  ind <- which(nee.filter$datetime %in% time_points & nee.filter$site_id == site[id])
+  ind <- which(nee.filter$datetime %in% time_pointsx & nee.filter$site_id == site[id])
   nee.mean[id, as.character(nee.filter$datetime[ind])] <- nee.filter$observation[ind]
 }
 
@@ -261,7 +261,7 @@ x_ic <- site_ensemble %>%
   matrix(nrow = ens, ncol = nsite)
 mu.f[,1] <- colMeans(x_ic)
 P.f[,,1] <- cov(x_ic)
-for (t in seq_along(time_points)) {
+for (t in seq_along(time_pointsx)) {
   # run forecast
   x_ic <- site_ensemble %>% 
     purrr::map('data') %>%
@@ -296,10 +296,10 @@ for (t in seq_along(time_points)) {
 # plot
 for(i in 1:nsite){
   ci = rbind(mu.a[i,]-1.96*sqrt(P.a[i,i,]),mu.a[i,]+1.96*sqrt(P.a[i,i,]))
-  plot(time_points,mu.a[i,],ylim=range(ci,na.rm=TRUE),type='n',main=site_ids[i],xlab="Date",ylab="NEE")
-  ecoforecastR::ciEnvelope(time_points,ci[1,],ci[2,],col="lightBlue")
-  lines(time_points,mu.a[i,],col=4, lw=2)
-  points(time_points,nee.mean[i,],col="red")
+  plot(time_pointsx,mu.a[i,],ylim=range(ci,na.rm=TRUE),type='n',main=site_ids[i],xlab="Date",ylab="NEE")
+  ecoforecastR::ciEnvelope(time_pointsx,ci[1,],ci[2,],col="lightBlue")
+  lines(time_pointsx,mu.a[i,],col=4, lw=2)
+  points(time_pointsx,nee.mean[i,],col="red")
   legend("topleft", lty=c(NA,1), pch=c("o", NA), col=c("red", "lightBlue"), legend = c("Observation", "Forecast"))
 }
 
