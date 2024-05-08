@@ -34,7 +34,7 @@ download_met_forecast <- function(forecast_date){
   ## connect to data
   df_future <- neon4cast::noaa_stage2(cycle = 0,
   version = "v12",
-  endpoint = NA,
+  endpoint = forecast_date,
   verbose = TRUE,
   start_date = noaa_date)
   

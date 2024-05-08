@@ -3,9 +3,9 @@ load("~/SustainabilitySeers/data_download_code/data/ensembleParameters.Rdata")
 source("~/SustainabilitySeers/Data_Download_Functions/GEFS_download.R")
 
 #Load forecast
+source("~/SustainabilitySeers/forecast_code/forecast_function.R")
 source("~/SustainabilitySeers/forecast_code/03_forecast_v2.R")
 
-  
 
 ##settings
 s <- 1
