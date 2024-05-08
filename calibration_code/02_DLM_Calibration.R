@@ -6,8 +6,8 @@ devtools::install_github("EcoForecast/ecoforecastR",force=TRUE)
 devtools::install_github('eco4cast/neon4cast')
 
 #Get the data ----
-source("~/SustainabilitySeers/Data/01A_EFI_datadownload.R")
-source("~/SustainabilitySeers/Data/01B_NOAA_datadownload.R")
+source("data_download_code/01B_PlotEFI.R")
+source("data_download_code/01A_NOAA_datadownload.R")
 
 
 # Merge the target and covariate data

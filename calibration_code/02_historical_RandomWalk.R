@@ -16,7 +16,7 @@ library(rjags)
 
 
 #Get the data ----
-source("~/SustainabilitySeers/Data_Download_Functions/01_datatargetdownload.R")
+source("data_download_code/01_datatargetdownload.R")
 
 met_all <- rbind(met_future, df_past)
 nee <- target1 %>% filter(variable=="nee") 
