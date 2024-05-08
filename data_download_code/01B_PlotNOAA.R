@@ -1,5 +1,5 @@
 # Purpose: Plot NOAA data
-source("~/SustainabilitySeers/data_download_code/01A_NOAA_datadownload.R")
+source("data_download_code/01A_NOAA_datadownload.R")
 library(ggplot2)
 
 # Plot ---- 

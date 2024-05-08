@@ -16,7 +16,7 @@ library(readr)
 library(tidyr)
 library(tidyverse)
 
-source("~/SustainabilitySeers/data_download_code/01_datatargetdownload.R") # get data
+source("data_download_code/01_datatargetdownload.R") # get data
 
 # Filter data ----
 # Select only target sites BART, OSBS, KONZ, SRER
